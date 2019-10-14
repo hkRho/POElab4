@@ -16,8 +16,8 @@ int base_speed = 30;
 
 int RmotorSpeed;
 int LmotorSpeed;
-unsigned int currentError;
-unsigned int previousError = 0;
+int currentError;
+int previousError = 0;
 unsigned long currentMillis;
 unsigned long previousMillis = 0;
 
@@ -53,13 +53,15 @@ void loop() {
   /// Do motor things
   RSvalue = analogRead(A0);
   LSvalue = analogRead(A1);
-  currentError = LSvalue - (RSvalue+6);
+  currentError = LSvalue - (RSvalue+20);
 
   // left value is  > than right by 12~20
   Serial.print("Right Value: ");
   Serial.print(RSvalue);
   Serial.print (" | Left Value: ");
-  Serial.println(LSvalue);
+  Serial.print(LSvalue);
+  Serial.print (" | Error: ");
+  Serial.println(currentError);
 
   currentMillis = millis();
   /// move forward
@@ -150,6 +152,15 @@ void parseNewData() {
         break;
       case 's': case 'S':
         Serial.println("O god o fuck");
+        oride = true;
+        cvals[0] = zoomy;
+        cvals[1] = zoomy;
+        cvals[2] = zoomy;
+        cvals[3] = zoomy;
+        break;
+      case 'g': case 'G':
+        Serial.println("O god o fuck");
+        oride = false;
         cvals[0] = zoomy;
         cvals[1] = zoomy;
         cvals[2] = zoomy;
