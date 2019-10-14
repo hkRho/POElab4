@@ -9,8 +9,7 @@ int RSpin = 0;
 int LSpin = 0;
 int RSvalue = 0;
 int LSvalue = 0;
-int RMspeed = 30;
-int LMspeed = 30;
+int Mspeed = 30;
 int turn_delay = 10;
 
 // Serial Input Work
@@ -22,7 +21,8 @@ boolean newData = false;
 
 // Override var - true when directly setting motor speeds, and not via PID
 boolean oride = false;
-int cvals[4] = {0,0,0,0};
+// Motor Speed | Left sensor threshold | Right sensor threshold | Motor override (stop)
+int cvals[4] = {0,900,870,1};
 
 void setup() {
   AFMS.begin();
@@ -41,10 +41,14 @@ void loop() {
   // Read Serial input, if any
   recvWithEndMarker();
   parseNewData();
-  RMspeed = cvals[0];
-  LMspeed = cvals[1];
+  if (cvals[3] == 1) {
+    Mspeed = 0;
+  }
+  else {
+    Mspeed = cvals[0];
+  }
   
-  setMotorSpeed(30,30);
+  setMotorSpeed(Mspeed,Mspeed);
   decideDirection(RSvalue, LSvalue);
 }
 
@@ -54,25 +58,20 @@ void setMotorSpeed(int RMspeed, int LMspeed) {
 }
 
 void decideDirection(int RSvalue, int LSvalue) {
-  if (RSvalue > 850 && LSvalue > 880){
-    Serial.print("CASE1");
-    // move forward
+  if (LSvalue > cvals[1] && RSvalue > cvals[2]) {
+    Serial.println("Perfectly on line");
     rightMotor->run(FORWARD);
     leftMotor->run(FORWARD);
   }
-
-  if (RSvalue > 815 && RSvalue < 850 && LSvalue > 840 && LSvalue < 880){
-    // move left
-    Serial.print("CASE2");
-    rightMotor->run(FORWARD);
-    leftMotor->run(RELEASE);
-  }
-
-  if (RSvalue > 800 && RSvalue < 815 && LSvalue > 810 && LSvalue < 840){
-    // move right
-    Serial.print("CASE3");
+  else if (LSvalue > cvals[1] && RSvalue <= cvals[2]) {
+    Serial.println("Too left");
     rightMotor->run(RELEASE);
     leftMotor->run(FORWARD);
+  }
+  else if (LSvalue <= cvals[1] && RSvalue > cvals[2]) {
+    Serial.println("Too right");
+    rightMotor->run(FORWARD);
+    leftMotor->run(RELEASE);
   }
 }
 
@@ -111,33 +110,27 @@ void parseNewData() {
     int zoomy = atoi(inputData);
     newData = false;
     switch(caseData) {
-      case 'p': case 'P':
-        Serial.print("Proportional input");
+      case 'm': case 'M':
+        oride = true;
+        Serial.println("Motor speed:");
         Serial.println(zoomy);
         cvals[0] = zoomy;
-        break;
-      case 'd': case 'D':
-        Serial.println("Derivate input");
-        Serial.println(zoomy);
-        cvals[1] = zoomy;
         break;
       case 'l': case 'L':
-        oride = true;
-        Serial.println("Left motor input");
+        Serial.print("Set left sensor threshold: ");
+        Serial.println(zoomy);
+        cvals[1] = zoomy;
+      case 'r': case 'R':
+        Serial.print("Set left sensor threshold: ");
         Serial.println(zoomy);
         cvals[2] = zoomy;
-        break;
-      case 'r': case 'R':
-        Serial.println("Right motor input");
-        Serial.println(zoomy);
-        cvals[3] = zoomy;
-        break;
       case 's': case 'S':
         Serial.println("O god o fuck");
-        cvals[0] = zoomy;
-        cvals[1] = zoomy;
-        cvals[2] = zoomy;
-        cvals[3] = zoomy;
+        cvals[3] = 1;
+        break;
+      case 'g': case 'G':
+        Serial.println("Gotta go fast");
+        cvals[3] = 0;
         break;
       default:
         Serial.println("Something screwed up.");
