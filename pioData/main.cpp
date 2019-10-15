@@ -14,9 +14,10 @@ Adafruit_DCMotor *leftMotor = AFMS.getMotor(2); // Left Motor
 
 int RSvalue = 0;
 int LSvalue = 0;
-int Mspeed = 30;
+int Mspeed = 0;
 int effectiveLMS = 0;
 int effectiveRMS = 0;
+unsigned long ct = 0;
 
 // Serial Input Work
 const byte numChars = 32;
@@ -28,7 +29,7 @@ boolean newData = false;
 // Override var - true when directly setting motor speeds, and not via PID
 boolean oride = false;
 // Motor Speed | Left sensor threshold | Right sensor threshold | Motor override (stop)
-int cvals[4] = {30,900,870,0};
+int cvals[4] = {60,900,870,0};
 
 void setup() {
   AFMS.begin();
@@ -144,6 +145,7 @@ void parseNewData() {
 
 void printData() {
 		String delim = ",";
-		String s = LSvalue+delim+RSvalue+delim+effectiveLMS+delim+effectiveRMS;
+		ct = millis();
+		String s = ct+delim+LSvalue+delim+RSvalue+delim+effectiveLMS+delim+effectiveRMS;
 		Serial.println(s);
 }
